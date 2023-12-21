@@ -37,17 +37,22 @@ body {
 }
 
 .main {
-  width: 50rem;
+  max-width: 50rem;
 }
 
 .app-header {
-  width: 66rem;
+  max-width: 66rem;
   margin-bottom: 4rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
+@media (max-width: 590px) {
+  html {
+    font-size: 50%;
+  }
+}
 .error {
   text-align: center;
   font-size: 1.6rem;
@@ -142,7 +147,16 @@ progress {
 }
 
 .btn-ui {
-  float: right;
+  /* float: right; */
+  margin-top: 2rem;
+  background-color: #ffa94d;
+  color: #333;
+}
+.btn-ui:not([disabled]):hover {
+  background-color: #e87f0e;
+}
+.btn.active {
+  background-color: #1098ad;
 }
 
 .options {
@@ -261,4 +275,15 @@ progress {
 
 .red {
   background-color: red;
+}
+
+.flex {
+  display: flex;
+  gap: 1rem;
+}
+
+.flex-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }

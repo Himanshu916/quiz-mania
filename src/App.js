@@ -9,6 +9,7 @@ import NextButton from "./NextButton";
 import Progress from "./Progress";
 import FinishScreen from "./FinishScreen";
 import { useEffect, useReducer } from "react";
+import { supabase } from "./services/supabase";
 const initialState = {
   questions: [],
   status: "loading",
@@ -16,10 +17,14 @@ const initialState = {
   answer: null,
   points: 0,
   highScore: 0,
+  quesType: "easy",
+  questionsServer: [],
 };
 
 const reducer = function (state, action) {
   switch (action.type) {
+    case "setCategory":
+      return { ...state, quesType: action.payload };
     case "dataRecieved":
       return { ...state, questions: action.payload, status: "ready" };
     case "dataFailed":
@@ -37,6 +42,8 @@ const reducer = function (state, action) {
             ? state.points + question.points
             : state.points,
       };
+    case "dataServer":
+      return { ...state, questionsServer: action.payload };
     case "nextQuestion":
       return { ...state, index: state.index + 1, answer: null };
     case "finishQuiz":
@@ -46,6 +53,8 @@ const reducer = function (state, action) {
         highScore:
           state.points > state.highScore ? state.points : state.highScore,
       };
+    case "initial":
+      return { ...state, status: "ready" };
     case "restartQuiz":
       return { ...state, index: 0, answer: null, points: 0, status: "ready" };
     default:
@@ -55,26 +64,47 @@ const reducer = function (state, action) {
 
 export default function App() {
   const [state, dispatch] = useReducer(reducer, initialState);
-  const { questions, status, index, answer, points, highScore } = state;
+  const {
+    questions,
+    status,
+    index,
+    answer,
+    points,
+    highScore,
+    quesType,
+    questionsServer,
+  } = state;
 
   const numQuestions = questions.length;
   const totalPoints = questions.reduce(
     (acc, question) => acc + question.points,
     0
   );
-  console.log(totalPoints, "hereee");
-  useEffect(function () {
-    async function getQuestions() {
-      try {
-        const response = await fetch("http://localhost:3000/questions");
-        const data = await response.json();
-        dispatch({ type: "dataRecieved", payload: data });
-      } catch (error) {
-        dispatch({ type: "dataFailed" });
+  console.log(totalPoints, "hereee", questionsServer);
+  useEffect(
+    function () {
+      async function getQuestions() {
+        try {
+          // const response = await fetch("http://localhost:8000/questions");
+          console.log(quesType, "hero hu");
+
+          let { data, error } = await supabase
+            .from(quesType + "Questions")
+            .select("*");
+          if (error) throw new Error(error.message);
+          dispatch({ type: "dataRecieved", payload: data });
+          // dispatch({ type: "dataServer", payload: easyQuestions });
+        } catch (error) {
+          // const data = await response.json();
+          // dispatch({ type: "dataRecieved", payload: data });
+          dispatch({ type: "dataFailed" });
+        }
       }
-    }
-    getQuestions();
-  }, []);
+
+      getQuestions();
+    },
+    [quesType]
+  );
 
   return (
     <div className="app">
@@ -83,7 +113,11 @@ export default function App() {
         {status === "loading" && <Loader />}
         {status === "error" && <Error />}
         {status === "ready" && (
-          <StartScreen dispatch={dispatch} numQuestions={numQuestions} />
+          <StartScreen
+            dispatch={dispatch}
+            numQuestions={numQuestions}
+            quesType={quesType}
+          />
         )}
         {status === "active" && (
           <>
